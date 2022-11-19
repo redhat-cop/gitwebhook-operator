@@ -32,6 +32,9 @@ spec:
             drop:
               - "ALL"
         image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+        volumeMounts:
+          - mountPath: /etc/certs/tls
+            name: tls-cert        
         args:
         - "--secure-listen-address=0.0.0.0:8443"
         - "--upstream=http://127.0.0.1:8080/"
@@ -59,4 +62,4 @@ spec:
         - name: tls-cert
           secret:
             defaultMode: 420
-            secretName: patch-operator-certs        
+            secretName: gitwebhook-operator-certs        

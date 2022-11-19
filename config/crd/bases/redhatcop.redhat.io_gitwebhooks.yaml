@@ -40,7 +40,7 @@ spec:
                   an organization or a user
                 type: string
               active:
-                default: "true"
+                default: true
                 description: Active whether this webhook should be actibe (github
                   only, will be ignored for gitlab)
                 type: boolean
@@ -94,7 +94,7 @@ spec:
                     x-kubernetes-map-type: atomic
                 type: object
               insecureSSL:
-                default: "true"
+                default: true
                 description: InsecureSSL whether to not verify the certificate of
                   the server serving the webhook
                 type: boolean

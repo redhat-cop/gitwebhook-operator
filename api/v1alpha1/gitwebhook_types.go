@@ -58,7 +58,7 @@ type GitWebhookSpec struct {
 	WebhookURL string `json:"webhookURL,omitempty"`
 
 	// InsecureSSL whether to not verify the certificate of the server serving the webhook
-	// +kubebuilder:default="true"
+	// +kubebuilder:default=true
 	InsecureSSL bool `json:"insecureSSL,omitempty"`
 
 	// WebhookSecret The secret to be used in the webhook callbacks. The key "secret" will be used to retrieve the secret/token
@@ -73,7 +73,7 @@ type GitWebhookSpec struct {
 	ContentType string `json:"content,omitempty"`
 
 	// Active whether this webhook should be actibe (github only, will be ignored for gitlab)
-	// +kubebuilder:default="true"
+	// +kubebuilder:default=true
 	Active bool `json:"active,omitempty"`
 
 	// PushEventBranchFilter filter for push event on branches (gitlab only, will be ignored for github)

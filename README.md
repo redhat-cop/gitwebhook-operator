@@ -90,6 +90,7 @@ export repo=raffaelespazzoli
 docker login quay.io/$repo
 oc new-project gitwebhook-operator
 oc project gitwebhook-operator
+oc label namespace gitwebhook-operator openshift.io/cluster-monitoring="true"
 envsubst < config/local-development/tilt/env-replace-image.yaml > config/local-development/tilt/replace-image.yaml
 make manifests
 tilt up
