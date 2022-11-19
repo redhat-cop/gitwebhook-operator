@@ -1,0 +1,17 @@
+name: pull request
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  shared-operator-workflow:
+    name: shared-operator-workflow
+    uses: redhat-cop/github-workflows-operators/.github/workflows/pr-operator.yml@v1.0.4
+    with: 
+      RUN_UNIT_TESTS: true
+      RUN_INTEGRATION_TESTS: false
+      RUN_HELMCHART_TEST: true
+      GO_VERSION: ~1.18
+      OPERATOR_SDK_VERSION: v1.25.2

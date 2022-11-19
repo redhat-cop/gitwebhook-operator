@@ -1,0 +1,12 @@
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: GitWebhook
+metadata:
+  labels:
+    app.kubernetes.io/name: gitwebhook
+    app.kubernetes.io/instance: gitwebhook-sample
+    app.kubernetes.io/part-of: gitwebhook-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: gitwebhook-operator
+  name: gitwebhook-sample
+spec:
+  # TODO(user): Add fields here

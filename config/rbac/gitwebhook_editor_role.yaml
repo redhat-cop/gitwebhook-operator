@@ -1,0 +1,31 @@
+# permissions for end users to edit gitwebhooks.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: gitwebhook-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: gitwebhook-operator
+    app.kubernetes.io/part-of: gitwebhook-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: gitwebhook-editor-role
+rules:
+- apiGroups:
+  - redhatcop.redhat.io
+  resources:
+  - gitwebhooks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redhatcop.redhat.io
+  resources:
+  - gitwebhooks/status
+  verbs:
+  - get
