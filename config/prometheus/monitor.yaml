@@ -24,7 +24,7 @@ spec:
         ca: 
           secret:
             key: 'tls.crt'
-            name: patch-operator-certs
+            name: gitwebhook-operator-certs
             optional: false
         serverName: $(METRICS_SERVICE_NAME).$(METRICS_SERVICE_NAMESPACE).svc
   selector:
