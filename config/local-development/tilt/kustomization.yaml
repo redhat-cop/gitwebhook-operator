@@ -7,22 +7,22 @@ namespace: gitwebhook-operator
 
 bases:
 - ../../default
-- ./service-account.yaml
+#- ./service-account.yaml
 
 
 patchesJson6902:
-- target:
-    group: admissionregistration.k8s.io
-    version: v1
-    kind: MutatingWebhookConfiguration
-    name: gitwebhook-operator-mutating-webhook-configuration
-  path: ./ca-injection.yaml
-- target:
-    group: admissionregistration.k8s.io
-    version: v1
-    kind: ValidatingWebhookConfiguration
-    name: gitwebhook-operator-validating-webhook-configuration
-  path: ./ca-injection.yaml
+# - target:
+#     group: admissionregistration.k8s.io
+#     version: v1
+#     kind: MutatingWebhookConfiguration
+#     name: gitwebhook-operator-mutating-webhook-configuration
+#   path: ./ca-injection.yaml
+# - target:
+#     group: admissionregistration.k8s.io
+#     version: v1
+#     kind: ValidatingWebhookConfiguration
+#     name: gitwebhook-operator-validating-webhook-configuration
+#   path: ./ca-injection.yaml
 - target:
     group: ""
     version: v1

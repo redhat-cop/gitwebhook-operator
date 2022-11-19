@@ -1,94 +1,176 @@
-# gitwebhook-operator
-// TODO(user): Add simple overview of use/purpose
+# Gitwebhook operator
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+## Deploying the Operator
 
-## Getting Started
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
-**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+This is a cluster-level operator that you can deploy in any namespace, `gitwebhook-operator` is recommended.
 
-### Running on the cluster
-1. Install Instances of Custom Resources:
+It is recommended to deploy this operator via [`OperatorHub`](https://operatorhub.io/), but you can also deploy it using [`Helm`](https://helm.sh/).
 
-```sh
-kubectl apply -f config/samples/
+### Multiarch Support
+
+| Arch  | Support  |
+|:-:|:-:|
+| amd64  | ✅ |
+| arm64  | ✅  |
+| ppc64le  | ✅  |
+| s390x  | ✅  |
+
+### Deploying from OperatorHub
+
+> **Note**: This operator supports being installed disconnected environments
+
+If you want to utilize the Operator Lifecycle Manager (OLM) to install this operator, you can do so in two ways: from the UI or the CLI.
+
+#### Deploying from OperatorHub UI
+
+- If you would like to launch this operator from the UI, you'll need to navigate to the OperatorHub tab in the console. Before starting, make sure you've created the namespace that you want to install this operator to with the following:
+
+```shell
+oc new-project gitwebhook-operator
 ```
 
-2. Build and push your image to the location specified by `IMG`:
-	
-```sh
-make docker-build docker-push IMG=<some-registry>/gitwebhook-operator:tag
-```
-	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+- Once there, you can search for this operator by name: `patch operator`. This will then return an item for our operator and you can select it to get started. Once you've arrived here, you'll be presented with an option to install, which will begin the process.
+- After clicking the install button, you can then select the namespace that you would like to install this to as well as the installation strategy you would like to proceed with (`Automatic` or `Manual`).
+- Once you've made your selection, you can select `Subscribe` and the installation will begin. After a few moments you can go ahead and check your namespace and you should see the operator running.
 
-```sh
-make deploy IMG=<some-registry>/gitwebhook-operator:tag
-```
+#### Deploying from OperatorHub using CLI
 
-### Uninstall CRDs
-To delete the CRDs from the cluster:
+If you'd like to launch this operator from the command line, you can use the manifests contained in this repository by running the following commands from the folder where you cloned the repository:
 
-```sh
-make uninstall
+```shell
+oc new-project gitwebhook-operator
+oc apply -f config/operatorhub -n gitwebhook-operator
 ```
 
-### Undeploy controller
-UnDeploy the controller to the cluster:
+This will create the appropriate OperatorGroup and Subscription and will trigger OLM to launch the operator in the specified namespace.
 
-```sh
-make undeploy
+### Deploying with Helm
+
+Here are the instructions to install the latest release with Helm.
+
+```shell
+oc new-project gitwebhook-operator
+helm repo add gitwebhook-operator https://redhat-cop.github.io/gitwebhook-operator
+helm repo update
+helm install gitwebhook-operator gitwebhook-operator/gitwebhook-operator
 ```
 
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+This can later be updated with the following commands:
 
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
-which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
-
-### Test It Out
-1. Install the CRDs into the cluster:
-
-```sh
-make install
+```shell
+helm repo update
+helm upgrade gitwebhook-operator gitwebhook-operator/gitwebhook-operator
 ```
 
-2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
+## Metrics
 
-```sh
-make run
+Prometheus compatible metrics are exposed by the Operator and can be integrated into OpenShift's default cluster monitoring. To enable OpenShift cluster monitoring, label the namespace the operator is deployed in with the label `openshift.io/cluster-monitoring="true"`.
+
+```shell
+oc label namespace <namespace> openshift.io/cluster-monitoring="true"
 ```
 
-**NOTE:** You can also run this in one step by running: `make install run`
-
-### Modifying the API definitions
-If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
+### Testing metrics
 
 ```sh
+export operatorNamespace=gitwebhook-operator-local # or gitwebhook-operator
+oc label namespace ${operatorNamespace} openshift.io/cluster-monitoring="true"
+oc rsh -n openshift-monitoring -c prometheus prometheus-k8s-0 /bin/bash
+export operatorNamespace=gitwebhook-operator-local # or gitwebhook-operator
+curl -v -s -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" https://gitwebhook-operator-controller-manager-metrics.${operatorNamespace}.svc.cluster.local:8443/metrics
+exit
+```
+
+## Development
+
+### Run the operator
+
+```shell
+export repo=raffaelespazzoli
+docker login quay.io/$repo
+oc new-project gitwebhook-operator
+oc project gitwebhook-operator
+envsubst < config/local-development/tilt/env-replace-image.yaml > config/local-development/tilt/replace-image.yaml
 make manifests
+tilt up
 ```
 
-**NOTE:** Run `make --help` for more information on all potential `make` targets
+### Test Manually
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+see [here](./test/readme.md)
 
-## License
+### Test helm chart locally
 
-Copyright 2022.
+Define an image and tag. For example...
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+```shell
+export imageRepository="quay.io/redhat-cop/gitwebhook-operator"
+export imageTag="$(git -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort='version:refname' --tags https://github.com/redhat-cop/gitwebhook-operator.git '*.*.*' | tail --lines=1 | cut --delimiter='/' --fields=3)"
+```
 
-    http://www.apache.org/licenses/LICENSE-2.0
+Deploy chart...
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+```shell
+make helmchart IMG=${imageRepository} VERSION=${imageTag}
+helm upgrade -i gitwebhook-operator-local charts/gitwebhook-operator -n gitwebhook-operator-local --create-namespace
+```
 
+Delete...
+
+```shell
+helm delete gitwebhook-operator-local -n gitwebhook-operator-local
+kubectl delete -f charts/gitwebhook-operator/crds/crds.yaml
+```
+
+## Building/Pushing the operator image
+
+```shell
+export repo=raffaelespazzoli #replace with yours
+docker login quay.io/$repo
+make docker-build IMG=quay.io/$repo/gitwebhook-operator:latest
+make docker-push IMG=quay.io/$repo/gitwebhook-operator:latest
+```
+
+## Deploy to OLM via bundle
+
+```shell
+make manifests
+make bundle IMG=quay.io/$repo/gitwebhook-operator:latest
+operator-sdk bundle validate ./bundle --select-optional name=operatorhub
+make bundle-build BUNDLE_IMG=quay.io/$repo/gitwebhook-operator-bundle:latest
+docker push quay.io/$repo/gitwebhook-operator-bundle:latest
+operator-sdk bundle validate quay.io/$repo/gitwebhook-operator-bundle:latest --select-optional name=operatorhub
+oc new-project gitwebhook-operator
+oc label namespace gitwebhook-operator openshift.io/cluster-monitoring="true"
+operator-sdk cleanup gitwebhook-operator -n gitwebhook-operator
+operator-sdk run bundle --install-mode AllNamespaces -n gitwebhook-operator quay.io/$repo/gitwebhook-operator-bundle:latest
+```
+
+## Releasing
+
+```shell
+git tag -a "<tagname>" -m "<commit message>"
+git push upstream <tagname>
+```
+
+If you need to remove a release:
+
+```shell
+git tag -d <tagname>
+git push upstream --delete <tagname>
+```
+
+If you need to "move" a release to the current main
+
+```shell
+git tag -f <tagname>
+git push upstream -f <tagname>
+```
+
+### Cleaning up
+
+```shell
+operator-sdk cleanup gitwebhook-operator -n gitwebhook-operator
+oc delete operatorgroup operator-sdk-og
+oc delete catalogsource gitwebhook-operator-catalog
+```
