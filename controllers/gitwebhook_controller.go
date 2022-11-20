@@ -49,13 +49,14 @@ type GitWebhookReconciler struct {
 	Recorder record.EventRecorder
 }
 
-const controllerName = "gitwebhook"
+const finalizerName = "gitwebhook.redhatcop.redhat.io/finalizer"
 
 //+kubebuilder:rbac:groups=redhatcop.redhat.io,resources=gitwebhooks,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=redhatcop.redhat.io,resources=gitwebhooks/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=redhatcop.redhat.io,resources=gitwebhooks/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 //+kubebuilder:rbac:groups="coordination.k8s.io",resources=leases,verbs=get;list;watch;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -67,7 +68,7 @@ const controllerName = "gitwebhook"
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 	ctx = context.WithValue(ctx, "kubeClient", r.Client)
 
 	instance := &redhatcopv1alpha1.GitWebhook{}
@@ -80,6 +81,7 @@ func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		log.Error(err, "unable to retrieve instance")
 		return reconcile.Result{}, err
 	}
 
@@ -88,25 +90,28 @@ func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// The object is not being deleted, so if it does not have our finalizer,
 		// then lets add the finalizer and update the object. This is equivalent
 		// registering our finalizer.
-		if !controllerutil.ContainsFinalizer(instance, controllerName) {
-			controllerutil.AddFinalizer(instance, controllerName)
+		if !controllerutil.ContainsFinalizer(instance, finalizerName) {
+			controllerutil.AddFinalizer(instance, finalizerName)
 			if err := r.Update(ctx, instance); err != nil {
+				log.Error(err, "unable to add finalizer")
 				return ctrl.Result{}, err
 			}
 		}
 	} else {
 		// The object is being deleted
-		if controllerutil.ContainsFinalizer(instance, controllerName) {
+		if controllerutil.ContainsFinalizer(instance, finalizerName) {
 			// our finalizer is present, so lets handle any external dependency
 			if err := r.deleteWebhook(ctx, instance); err != nil {
+				log.Error(err, "unable to delete webhook")
 				// if fail to delete the external dependency here, return with error
 				// so that it can be retried
 				return ctrl.Result{}, err
 			}
 
 			// remove our finalizer from the list and update it.
-			controllerutil.RemoveFinalizer(instance, controllerName)
+			controllerutil.RemoveFinalizer(instance, finalizerName)
 			if err := r.Update(ctx, instance); err != nil {
+				log.Error(err, "unable to remove finalizer")
 				return ctrl.Result{}, err
 			}
 		}
@@ -155,14 +160,16 @@ func (r *GitWebhookReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *GitWebhookReconciler) manageSuccess(ctx context.Context, instance *redhatcopv1alpha1.GitWebhook) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
+	log.V(1).Info("manageSuccess", "instance", instance)
 	condition := metav1.Condition{
 		Type:               "Success",
 		LastTransitionTime: metav1.Now(),
 		ObservedGeneration: instance.GetGeneration(),
-		Reason:             "Webhook created or updated",
+		Reason:             "Webhook_created_updated",
 		Status:             metav1.ConditionTrue,
 	}
 	instance.Status.Conditions = (addOrReplaceCondition(condition, instance.Status.Conditions))
+	log.V(1).Info("updating status", "instance", instance)
 	err := r.Client.Status().Update(ctx, instance)
 	if err != nil {
 		log.Error(err, "unable to update status")
@@ -184,6 +191,7 @@ func addOrReplaceCondition(c metav1.Condition, conditions []metav1.Condition) []
 
 func (r *GitWebhookReconciler) manageFailure(context context.Context, instance *redhatcopv1alpha1.GitWebhook, issue error) (reconcile.Result, error) {
 	log := log.FromContext(context)
+	log.V(1).Info("manageFailure", "instance", instance, "issue", issue)
 	r.Recorder.Event(instance, "Warning", "ProcessingError", issue.Error())
 
 	condition := metav1.Condition{
@@ -191,10 +199,11 @@ func (r *GitWebhookReconciler) manageFailure(context context.Context, instance *
 		LastTransitionTime: metav1.Now(),
 		ObservedGeneration: instance.GetGeneration(),
 		Message:            issue.Error(),
-		Reason:             "unable to reconcile",
+		Reason:             "reconcile_failed",
 		Status:             metav1.ConditionTrue,
 	}
 	instance.Status.Conditions = (addOrReplaceCondition(condition, instance.Status.Conditions))
+	log.V(1).Info("updating status", "instance", instance)
 	err := r.Client.Status().Update(context, instance)
 	if err != nil {
 		log.Error(err, "unable to update status")

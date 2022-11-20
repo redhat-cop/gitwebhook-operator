@@ -1,0 +1,16 @@
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: GitWebhook
+metadata:
+  name: gitwebhook-github
+spec:
+  gitHub:
+    gitServerCredentials:
+      name: github-pat
+  repositoryOwner: ${repo_owner}
+  ownerType: user
+  repositoryName: ${repo_name}
+  webhookURL: https://hellowebhook.com
+  webhookSecret:
+    name: webhook-secret
+  events:
+    - push  

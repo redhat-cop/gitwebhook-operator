@@ -20,4 +20,4 @@ spec:
     protocol: TCP
     targetPort: https
   selector:
-    control-plane: gitwebhook-manager
+    control-plane: gitwebhook-operator

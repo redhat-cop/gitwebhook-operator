@@ -47,10 +47,17 @@ type GitWebhookSpec struct {
 
 	// RepositoryOwner The owner of the repository, can be either an organization or a user
 	// +kubebuilder:validation:Required
-	RepositoryOwner string `json:"RepositoryOwner,omitempty"`
+	RepositoryOwner string `json:"repositoryOwner,omitempty"`
 
 	// RepositoryName The name of the repository
+	// +kubebuilder:validation:Required
 	RepositoryName string `json:"repositoryName,omitempty"`
+
+	// RepositoryName The name of the repository
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum="user";"organization"
+	// +kubebuilder:default="organization"
+	OwnerType string `json:"ownerType,omitempty"`
 
 	// WebhookURL The URL of the webhook to be called
 	// +kubebuilder:validation:Required
@@ -58,7 +65,6 @@ type GitWebhookSpec struct {
 	WebhookURL string `json:"webhookURL,omitempty"`
 
 	// InsecureSSL whether to not verify the certificate of the server serving the webhook
-	// +kubebuilder:default=true
 	InsecureSSL bool `json:"insecureSSL,omitempty"`
 
 	// WebhookSecret The secret to be used in the webhook callbacks. The key "secret" will be used to retrieve the secret/token
@@ -83,6 +89,7 @@ type GitWebhookSpec struct {
 type GitServerConfig struct {
 	// GitAPIServerURL the url of the git server api
 	// +kubebuilder:validation:Pattern=`^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$`
+	// +kubebuilder:default="https://api.github.com/"
 	GitAPIServerURL string `json:"gitAPIServerURL,omitempty"`
 	// GitServerCredentials credentials to use when authenticating to the git server, must contain a "token" key
 	GitServerCredentials corev1.LocalObjectReference `json:"gitServerCredentials,omitempty"`

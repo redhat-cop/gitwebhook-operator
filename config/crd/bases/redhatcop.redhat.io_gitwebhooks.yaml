@@ -35,10 +35,6 @@ spec:
           spec:
             description: GitWebhookSpec defines the desired state of GitWebhook
             properties:
-              RepositoryOwner:
-                description: RepositoryOwner The owner of the repository, can be either
-                  an organization or a user
-                type: string
               active:
                 default: true
                 description: Active whether this webhook should be actibe (github
@@ -60,6 +56,7 @@ spec:
                 description: GitHub the configuration to connect to the gitlab server
                 properties:
                   gitAPIServerURL:
+                    default: https://api.github.com/
                     description: GitAPIServerURL the url of the git server api
                     pattern: ^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$
                     type: string
@@ -79,6 +76,7 @@ spec:
                   only one of gitlab or github is allowed
                 properties:
                   gitAPIServerURL:
+                    default: https://api.github.com/
                     description: GitAPIServerURL the url of the git server api
                     pattern: ^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$
                     type: string
@@ -94,16 +92,26 @@ spec:
                     x-kubernetes-map-type: atomic
                 type: object
               insecureSSL:
-                default: true
                 description: InsecureSSL whether to not verify the certificate of
                   the server serving the webhook
                 type: boolean
+              ownerType:
+                default: organization
+                description: RepositoryName The name of the repository
+                enum:
+                - user
+                - organization
+                type: string
               pushEventBranchFilter:
                 description: PushEventBranchFilter filter for push event on branches
                   (gitlab only, will be ignored for github)
                 type: string
               repositoryName:
                 description: RepositoryName The name of the repository
+                type: string
+              repositoryOwner:
+                description: RepositoryOwner The owner of the repository, can be either
+                  an organization or a user
                 type: string
               webhookSecret:
                 description: WebhookSecret The secret to be used in the webhook callbacks.

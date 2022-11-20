@@ -98,7 +98,27 @@ tilt up
 
 ### Test Manually
 
-see [here](./test/readme.md)
+#### Github
+
+create a github PAT and a webhook secret and export them as variables
+also export a repo owner and name on which the pat has access.
+For frequent testing it is recommended to create a secrets.sh file a then source it. It will not be committed.
+The PAT must have these permissions
+
+![PAT permissions](./media/github-pat-permissions.png "PAT permissions")
+
+```shell
+export github_pat=<your-github-pat>
+export webhook_secret=<your webhook secret>
+export repo_owner=<your-repo-url>
+export repo_name=<your repo name>
+
+oc new-project test-gitwebhook-github
+envsubst < ./test/github/githubpat-secret.yaml | oc apply -f - -n test-gitwebhook-github
+envsubst < ./test/github/webhook-secret.yaml | oc apply -f - -n test-gitwebhook-github
+envsubst < ./test/github/gitwebhook.yaml | oc apply -f - -n test-gitwebhook-github
+```
+
 
 ### Test helm chart locally
 
