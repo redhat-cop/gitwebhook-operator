@@ -96,6 +96,7 @@ func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				log.Error(err, "unable to add finalizer")
 				return ctrl.Result{}, err
 			}
+			return ctrl.Result{}, err
 		}
 	} else {
 		// The object is being deleted
@@ -107,7 +108,6 @@ func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				// so that it can be retried
 				return ctrl.Result{}, err
 			}
-
 			// remove our finalizer from the list and update it.
 			controllerutil.RemoveFinalizer(instance, finalizerName)
 			if err := r.Update(ctx, instance); err != nil {
@@ -116,6 +116,7 @@ func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		}
 		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, err
 	}
 	err = r.reconcileWebHook(ctx, instance)
 	if err != nil {
@@ -160,7 +161,6 @@ func (r *GitWebhookReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *GitWebhookReconciler) manageSuccess(ctx context.Context, instance *redhatcopv1alpha1.GitWebhook) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
-	log.V(1).Info("manageSuccess", "instance", instance)
 	condition := metav1.Condition{
 		Type:               "Success",
 		LastTransitionTime: metav1.Now(),
@@ -169,7 +169,6 @@ func (r *GitWebhookReconciler) manageSuccess(ctx context.Context, instance *redh
 		Status:             metav1.ConditionTrue,
 	}
 	instance.Status.Conditions = (addOrReplaceCondition(condition, instance.Status.Conditions))
-	log.V(1).Info("updating status", "instance", instance)
 	err := r.Client.Status().Update(ctx, instance)
 	if err != nil {
 		log.Error(err, "unable to update status")
@@ -191,7 +190,6 @@ func addOrReplaceCondition(c metav1.Condition, conditions []metav1.Condition) []
 
 func (r *GitWebhookReconciler) manageFailure(context context.Context, instance *redhatcopv1alpha1.GitWebhook, issue error) (reconcile.Result, error) {
 	log := log.FromContext(context)
-	log.V(1).Info("manageFailure", "instance", instance, "issue", issue)
 	r.Recorder.Event(instance, "Warning", "ProcessingError", issue.Error())
 
 	condition := metav1.Condition{
@@ -203,7 +201,6 @@ func (r *GitWebhookReconciler) manageFailure(context context.Context, instance *
 		Status:             metav1.ConditionTrue,
 	}
 	instance.Status.Conditions = (addOrReplaceCondition(condition, instance.Status.Conditions))
-	log.V(1).Info("updating status", "instance", instance)
 	err := r.Client.Status().Update(context, instance)
 	if err != nil {
 		log.Error(err, "unable to update status")

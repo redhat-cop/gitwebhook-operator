@@ -65,8 +65,12 @@ func (m *GitHubWebHook) getClient(ctx context.Context) (*github.Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
-	tc := oauth2.NewClient(ctx, ts)
+	//debug client, might be useful
+	//tc := &oauth2.Transport{Source: ts, Base: dbg.New()}
+	//git := github.NewClient(&http.Client{Transport: tc})
 
+	//production client
+	tc := oauth2.NewClient(ctx, ts)
 	git := github.NewClient(tc)
 
 	if m.gitWebhook.Spec.GitHub.GitAPIServerURL != "" {
@@ -198,7 +202,6 @@ func (m *GitHubWebHook) createOrUpdateWebhook(ctx context.Context) error {
 
 func (m *GitHubWebHook) deleteIfExists(ctx context.Context) error {
 	log := log.FromContext(ctx)
-	log.V(1).Info("deleteIfExists called")
 	hook, found, err := m.getHook(ctx)
 	if err != nil {
 		log.Error(err, "error while retrieving webhook")
@@ -212,8 +215,7 @@ func (m *GitHubWebHook) deleteIfExists(ctx context.Context) error {
 		log.Error(err, "error get github client")
 		return err
 	}
-	response, err := git.Repositories.DeleteHook(ctx, m.gitWebhook.Spec.RepositoryOwner, m.gitWebhook.Spec.RepositoryName, *hook.ID)
-	log.V(1).Info("DeleteHook", "response", response, "err", err)
+	_, err = git.Repositories.DeleteHook(ctx, m.gitWebhook.Spec.RepositoryOwner, m.gitWebhook.Spec.RepositoryName, *hook.ID)
 	if err != nil {
 		log.Error(err, "unable to delete webhook")
 		return err

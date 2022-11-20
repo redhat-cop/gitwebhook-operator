@@ -97,6 +97,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "GitWebhook")
 		os.Exit(1)
 	}
+	if err = (&redhatcopv1alpha1.GitWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "GitWebhook")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
