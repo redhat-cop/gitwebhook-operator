@@ -40,10 +40,10 @@ type WebHook interface {
 type GitWebhookSpec struct {
 
 	// GitLab the configuration to connect to the gitlab server. only one of gitlab or github is allowed
-	GitLab *GitServerConfig `json:"gitLab,omitempty"`
+	GitLab *GitLabServerConfig `json:"gitLab,omitempty"`
 
 	// GitHub the configuration to connect to the gitlab server
-	GitHub *GitServerConfig `json:"gitHub,omitempty"`
+	GitHub *GitHubServerConfig `json:"gitHub,omitempty"`
 
 	// RepositoryOwner The owner of the repository, can be either an organization or a user
 	// +kubebuilder:validation:Required
@@ -86,11 +86,20 @@ type GitWebhookSpec struct {
 	PushEventBranchFilter string `json:"pushEventBranchFilter,omitempty"`
 }
 
-type GitServerConfig struct {
+type GitHubServerConfig struct {
 	// GitAPIServerURL the url of the git server api
 	// +kubebuilder:validation:Pattern=`^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$`
 	// +kubebuilder:default="https://api.github.com/"
-	GitAPIServerURL string `json:"gitAPIServerURL,omitempty"`
+	GitHubAPIServerURL string `json:"gitHubAPIServerURL,omitempty"`
+	// GitServerCredentials credentials to use when authenticating to the git server, must contain a "token" key
+	GitServerCredentials corev1.LocalObjectReference `json:"gitServerCredentials,omitempty"`
+}
+
+type GitLabServerConfig struct {
+	// GitAPIServerURL the url of the git server api
+	// +kubebuilder:validation:Pattern=`^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$`
+	// +kubebuilder:default="https://gitlab.com/"
+	GitLabAPIServerURL string `json:"gitLabAPIServerURL,omitempty"`
 	// GitServerCredentials credentials to use when authenticating to the git server, must contain a "token" key
 	GitServerCredentials corev1.LocalObjectReference `json:"gitServerCredentials,omitempty"`
 }
@@ -151,19 +160,31 @@ func (m *GitWebhook) GetWebhookSecret(ctx context.Context) (string, error) {
 	}
 }
 
-func (m *GitWebhook) GetGitCredential(ctx context.Context, gitServerConfig *GitServerConfig) (string, error) {
-	if gitServerConfig.GitServerCredentials.Name == "" {
-		return "", nil
+func (m *GitWebhook) GetGitCredential(ctx context.Context, gitServerConfig interface{}) (string, error) {
+	var secretName string
+	switch v := gitServerConfig.(type) {
+	case *GitHubServerConfig:
+		{
+			secretName = v.GitServerCredentials.Name
+		}
+	case *GitLabServerConfig:
+		{
+			secretName = v.GitServerCredentials.Name
+		}
+	default:
+		{
+			return "", errors.New("unrecognized type")
+		}
 	}
 	log := log.FromContext(ctx)
 	kubeClient := ctx.Value("kubeClient").(client.Client)
 	secret := &corev1.Secret{}
 	err := kubeClient.Get(ctx, types.NamespacedName{
-		Name:      gitServerConfig.GitServerCredentials.Name,
+		Name:      secretName,
 		Namespace: m.GetNamespace(),
 	}, secret, &client.GetOptions{})
 	if err != nil {
-		log.Error(err, "unable to find secret: "+gitServerConfig.GitServerCredentials.Name)
+		log.Error(err, "unable to find secret: "+secretName)
 		return "", err
 	}
 	if data, found := secret.Data["token"]; !found {

@@ -13,7 +13,7 @@ import (
 type GitLabWebHook struct {
 	gitWebhook *redhatcopv1alpha1.GitWebhook
 	project    *gitlab.Project
-	webhook    *gitlab.ProjectHook
+	gitlab     *gitlab.Client
 }
 
 var _ redhatcopv1alpha1.WebHook = &GitLabWebHook{}
@@ -50,7 +50,7 @@ func (m *GitLabWebHook) deleteIfExists(ctx context.Context) error {
 	if !found {
 		return nil
 	}
-	git, err := m.getGitLabClient(ctx)
+	git, err := m.getClient(ctx)
 	if err != nil {
 		log.Error(err, "unable to create gitlab client")
 		return err
@@ -91,7 +91,7 @@ func (m *GitLabWebHook) createOrUpdate(ctx context.Context) error {
 		log.Error(err, "unable to retrieve webhook")
 		return err
 	}
-	git, err := m.getGitLabClient(ctx)
+	git, err := m.getClient(ctx)
 	if err != nil {
 		log.Error(err, "unable to create gitlab client")
 		return err
@@ -153,7 +153,7 @@ func (m *GitLabWebHook) getProject(ctx context.Context) (*gitlab.Project, bool, 
 	if m.project != nil {
 		return m.project, true, nil
 	}
-	git, err := m.getGitLabClient(ctx)
+	git, err := m.getClient(ctx)
 	if err != nil {
 		log.Error(err, "unable to create gitlab client")
 		return nil, false, err
@@ -185,11 +185,8 @@ func (m *GitLabWebHook) getProject(ctx context.Context) (*gitlab.Project, bool, 
 }
 
 func (m *GitLabWebHook) getHook(ctx context.Context) (*gitlab.ProjectHook, bool, error) {
-	if m.webhook != nil {
-		return m.webhook, true, nil
-	}
 	log := log.FromContext(ctx)
-	git, err := m.getGitLabClient(ctx)
+	git, err := m.getClient(ctx)
 	if err != nil {
 		log.Error(err, "unable to create gitlab client")
 		return nil, false, err
@@ -209,7 +206,6 @@ func (m *GitLabWebHook) getHook(ctx context.Context) (*gitlab.ProjectHook, bool,
 	}
 	for _, hook := range hooks {
 		if hook.URL == m.gitWebhook.Spec.WebhookURL {
-			m.webhook = hook
 			return hook, true, nil
 		}
 	}
@@ -224,7 +220,7 @@ func (m *GitLabWebHook) toEditProjectHookOptions(ctx context.Context) (*gitlab.E
 		return nil, err
 	}
 	editProjectHookOptions := gitlab.EditProjectHookOptions{
-		EnableSSLVerification:  &m.gitWebhook.Spec.InsecureSSL,
+		EnableSSLVerification:  gitlab.Bool(!m.gitWebhook.Spec.InsecureSSL),
 		Token:                  &secret,
 		URL:                    &m.gitWebhook.Spec.WebhookURL,
 		PushEventsBranchFilter: &m.gitWebhook.Spec.PushEventBranchFilter,
@@ -238,7 +234,7 @@ func (m *GitLabWebHook) toEditProjectHookOptions(ctx context.Context) (*gitlab.E
 
 func (m *GitLabWebHook) toProjectHook(ctx context.Context) (*gitlab.ProjectHook, error) {
 	projectHook := gitlab.ProjectHook{
-		EnableSSLVerification:  m.gitWebhook.Spec.InsecureSSL,
+		EnableSSLVerification:  !m.gitWebhook.Spec.InsecureSSL,
 		URL:                    m.gitWebhook.Spec.WebhookURL,
 		PushEventsBranchFilter: m.gitWebhook.Spec.PushEventBranchFilter,
 	}
@@ -257,7 +253,7 @@ func (m *GitLabWebHook) toAddProjectHookOptions(ctx context.Context) (*gitlab.Ad
 		return nil, err
 	}
 	addProjectOptions := gitlab.AddProjectHookOptions{
-		EnableSSLVerification:  &m.gitWebhook.Spec.InsecureSSL,
+		EnableSSLVerification:  gitlab.Bool(!m.gitWebhook.Spec.InsecureSSL),
 		Token:                  &secret,
 		URL:                    &m.gitWebhook.Spec.WebhookURL,
 		PushEventsBranchFilter: &m.gitWebhook.Spec.PushEventBranchFilter,
@@ -374,7 +370,10 @@ func (m *GitLabWebHook) addGitLabEventsToEditProjectHookOptions(editProjectHookO
 	return nil
 }
 
-func (m *GitLabWebHook) getGitLabClient(ctx context.Context) (*gitlab.Client, error) {
+func (m *GitLabWebHook) getClient(ctx context.Context) (*gitlab.Client, error) {
+	if m.gitlab != nil {
+		return m.gitlab, nil
+	}
 	log := log.FromContext(ctx)
 	token, err := m.gitWebhook.GetGitCredential(ctx, m.gitWebhook.Spec.GitLab)
 	if err != nil {
@@ -382,10 +381,10 @@ func (m *GitLabWebHook) getGitLabClient(ctx context.Context) (*gitlab.Client, er
 		return nil, err
 	}
 	var git *gitlab.Client
-	if m.gitWebhook.Spec.GitLab.GitAPIServerURL != "" {
-		git, err = gitlab.NewClient(token, gitlab.WithBaseURL(m.gitWebhook.Spec.GitLab.GitAPIServerURL))
+	if m.gitWebhook.Spec.GitLab.GitLabAPIServerURL != "" {
+		git, err = gitlab.NewClient(token, gitlab.WithBaseURL(m.gitWebhook.Spec.GitLab.GitLabAPIServerURL))
 		if err != nil {
-			log.Error(err, "Failed to create gitlab client", "url", m.gitWebhook.Spec.GitLab.GitAPIServerURL)
+			log.Error(err, "Failed to create gitlab client", "url", m.gitWebhook.Spec.GitLab.GitLabAPIServerURL)
 			return nil, err
 		}
 	} else {

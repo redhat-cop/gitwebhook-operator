@@ -100,25 +100,42 @@ tilt up
 
 #### Github
 
-create a github PAT and a webhook secret and export them as variables
-also export a repo owner and name on which the pat has access.
+Create a github PAT and a webhook secret and export them as variables.
+Also export a repo owner and name on which the pat has access.
 For frequent testing it is recommended to create a secrets.sh file a then source it. It will not be committed.
-The PAT must have these permissions
+The PAT must have these permissions:
 
 ![PAT permissions](./media/github-pat-permissions.png "PAT permissions")
 
 ```shell
 export github_pat=<your-github-pat>
 export webhook_secret=<your webhook secret>
-export repo_owner=<your-repo-url>
+export repo_owner=<your-repo-owner>
 export repo_name=<your repo name>
 
 oc new-project test-gitwebhook-github
-envsubst < ./test/github/githubpat-secret.yaml | oc apply -f - -n test-gitwebhook-github
-envsubst < ./test/github/webhook-secret.yaml | oc apply -f - -n test-gitwebhook-github
-envsubst < ./test/github/gitwebhook.yaml | oc apply -f - -n test-gitwebhook-github
+envsubst < ./test/pat-secret-github.yaml | oc apply -f - -n test-gitwebhook-github
+envsubst < ./test/webhook-secret.yaml | oc apply -f - -n test-gitwebhook-github
+envsubst < ./test/gitwebhook-github.yaml | oc apply -f - -n test-gitwebhook-github
 ```
 
+#### Gitlab
+
+Create a github PAT and a webhook secret and export them as variables.
+Also export a repo owner and name on which the pat has access.
+For frequent testing it is recommended to create a secrets.sh file a then source it. It will not be committed.
+
+```shell
+export gitlab_pat=<your-gitlab-pat>
+export webhook_secret=<your webhook secret>
+export gitlab_repo_owner=<your-repo-owner>
+export gitlab_repo_name=<your repo name>
+
+oc new-project test-gitwebhook-gitlab
+envsubst < ./test/pat-secret-gitlab.yaml | oc apply -f - -n test-gitwebhook-gitlab
+envsubst < ./test/webhook-secret.yaml | oc apply -f - -n test-gitwebhook-gitlab
+envsubst < ./test/gitwebhook-gitlab.yaml | oc apply -f - -n test-gitwebhook-gitlab
+```
 
 ### Test helm chart locally
 

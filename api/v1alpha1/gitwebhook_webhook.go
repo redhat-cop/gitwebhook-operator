@@ -68,10 +68,10 @@ func (r *GitWebhook) ValidateUpdate(old runtime.Object) error {
 	}
 	oldGW := old.(*GitWebhook)
 	//owner,owertype, repository, git server and url cannot be changed and the git configuration
-	if r.Spec.GitHub != nil && oldGW.Spec.GitHub != nil && r.Spec.GitHub.GitAPIServerURL != oldGW.Spec.GitHub.GitAPIServerURL {
+	if r.Spec.GitHub != nil && oldGW.Spec.GitHub != nil && r.Spec.GitHub.GitHubAPIServerURL != oldGW.Spec.GitHub.GitHubAPIServerURL {
 		return errors.New("github server cannot be changed")
 	}
-	if r.Spec.GitLab != nil && oldGW.Spec.GitLab != nil && r.Spec.GitLab.GitAPIServerURL != oldGW.Spec.GitLab.GitAPIServerURL {
+	if r.Spec.GitLab != nil && oldGW.Spec.GitLab != nil && r.Spec.GitLab.GitLabAPIServerURL != oldGW.Spec.GitLab.GitLabAPIServerURL {
 		return errors.New("gitlab server cannot be changed")
 	}
 	if r.Spec.OwnerType != oldGW.Spec.OwnerType {

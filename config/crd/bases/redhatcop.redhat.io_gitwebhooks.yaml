@@ -55,7 +55,7 @@ spec:
               gitHub:
                 description: GitHub the configuration to connect to the gitlab server
                 properties:
-                  gitAPIServerURL:
+                  gitHubAPIServerURL:
                     default: https://api.github.com/
                     description: GitAPIServerURL the url of the git server api
                     pattern: ^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$
@@ -75,8 +75,8 @@ spec:
                 description: GitLab the configuration to connect to the gitlab server.
                   only one of gitlab or github is allowed
                 properties:
-                  gitAPIServerURL:
-                    default: https://api.github.com/
+                  gitLabAPIServerURL:
+                    default: https://gitlab.com/
                     description: GitAPIServerURL the url of the git server api
                     pattern: ^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$
                     type: string

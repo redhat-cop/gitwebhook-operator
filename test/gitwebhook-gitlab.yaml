@@ -1,0 +1,16 @@
+apiVersion: redhatcop.redhat.io/v1alpha1
+kind: GitWebhook
+metadata:
+  name: gitwebhook-gitlab
+spec:
+  gitLab:
+    gitServerCredentials:
+      name: gitlab-pat
+  repositoryOwner: ${gitlab_repo_owner}
+  ownerType: user
+  repositoryName: ${gitlab_repo_name}
+  webhookURL: https://hellowebhook.com
+  webhookSecret:
+    name: webhook-secret
+  events:
+    - push_events  

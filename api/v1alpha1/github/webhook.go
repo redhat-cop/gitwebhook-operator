@@ -73,10 +73,10 @@ func (m *GitHubWebHook) getClient(ctx context.Context) (*github.Client, error) {
 	tc := oauth2.NewClient(ctx, ts)
 	git := github.NewClient(tc)
 
-	if m.gitWebhook.Spec.GitHub.GitAPIServerURL != "" {
-		git.BaseURL, err = url.Parse(m.gitWebhook.Spec.GitHub.GitAPIServerURL)
+	if m.gitWebhook.Spec.GitHub.GitHubAPIServerURL != "" {
+		git.BaseURL, err = url.Parse(m.gitWebhook.Spec.GitHub.GitHubAPIServerURL)
 		if err != nil {
-			log.Error(err, "Unable to parse github url", "url", m.gitWebhook.Spec.GitHub.GitAPIServerURL)
+			log.Error(err, "Unable to parse github url", "url", m.gitWebhook.Spec.GitHub.GitHubAPIServerURL)
 			return nil, err
 		}
 	}

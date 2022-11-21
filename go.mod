@@ -83,7 +83,6 @@ require (
 )
 
 require (
-	github.com/gmlewis/go-httpdebug v0.0.7
 	github.com/go-logr/logr v1.2.3
 	github.com/google/go-github/v48 v48.1.0
 	golang.org/x/oauth2 v0.2.0

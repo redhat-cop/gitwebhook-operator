@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	err "errors"
+	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
@@ -84,6 +86,8 @@ func (r *GitWebhookReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		log.Error(err, "unable to retrieve instance")
 		return reconcile.Result{}, err
 	}
+
+	log.V(1).Info("reconcile started", "instance", instance)
 
 	// examine DeletionTimestamp to determine if object is under deletion
 	if instance.DeletionTimestamp.IsZero() {
@@ -149,6 +153,7 @@ func (r *GitWebhookReconciler) reconcileWebHook(ctx context.Context, instance *r
 func (r *GitWebhookReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&redhatcopv1alpha1.GitWebhook{}).
+		WithEventFilter(ExcludeManagedFieldsAndStatus{}).
 		Watches(&source.Kind{Type: &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				Kind: "Secret",
@@ -275,4 +280,30 @@ func (e *enqueForSelectedGitWebhook) Update(evt event.UpdateEvent, q workqueue.R
 func (e *enqueForSelectedGitWebhook) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 }
 func (e *enqueForSelectedGitWebhook) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+}
+
+type ExcludeManagedFieldsAndStatus struct {
+	predicate.Funcs
+}
+
+// Update implements default UpdateEvent filter for validating resource version change
+func (ExcludeManagedFieldsAndStatus) Update(e event.UpdateEvent) bool {
+	var old *redhatcopv1alpha1.GitWebhook
+	var new *redhatcopv1alpha1.GitWebhook
+	var ok bool
+	if old, ok = e.ObjectOld.(*redhatcopv1alpha1.GitWebhook); !ok {
+		return false
+	}
+	if new, ok = e.ObjectNew.(*redhatcopv1alpha1.GitWebhook); !ok {
+		return false
+	}
+	old = old.DeepCopy()
+	new = new.DeepCopy()
+	old.ObjectMeta.ManagedFields = []metav1.ManagedFieldsEntry{}
+	new.ObjectMeta.ManagedFields = []metav1.ManagedFieldsEntry{}
+	old.Status = redhatcopv1alpha1.GitWebhookStatus{}
+	new.Status = redhatcopv1alpha1.GitWebhookStatus{}
+	old.ResourceVersion = ""
+	new.ResourceVersion = ""
+	return !reflect.DeepEqual(old, new)
 }
