@@ -165,7 +165,7 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: gitwebhook-operator-controller-manager
+        serviceAccountName: controller-manager
       deployments:
       - label:
           app.kubernetes.io/component: manager
@@ -276,7 +276,7 @@ spec:
                   readOnly: true
               securityContext:
                 runAsNonRoot: true
-              serviceAccountName: gitwebhook-operator-controller-manager
+              serviceAccountName: controller-manager
               terminationGracePeriodSeconds: 10
               volumes:
               - name: cert
@@ -320,7 +320,7 @@ spec:
           verbs:
           - create
           - patch
-        serviceAccountName: gitwebhook-operator-controller-manager
+        serviceAccountName: controller-manager
     strategy: deployment
   installModes:
   - supported: false
