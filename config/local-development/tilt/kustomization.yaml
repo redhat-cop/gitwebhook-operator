@@ -7,7 +7,7 @@ namespace: gitwebhook-operator
 
 bases:
 - ../../default
-#- ./service-account.yaml
+- ./service-account.yaml
 
 
 patchesJson6902:

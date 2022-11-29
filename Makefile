@@ -299,8 +299,6 @@ HELM_TEST_IMG_TAG ?= helmchart-test
 kind-setup: kind kubectl helm
 	$(KIND) delete cluster
 	$(KIND) create cluster --image docker.io/kindest/node:$(KUBECTL_VERSION) --config=./integration/cluster-kind.yaml
-	$(HELM) upgrade ingress-nginx ./integration/helm/ingress-nginx -i --create-namespace -n ingress-nginx --atomic
-	$(KUBECTL) wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s
 
 # Deploy the helmchart to a kind cluster to test deployment.
 # If the test-metrics sidecar in the prometheus pod is ready, the metrics work and the test is successful.
