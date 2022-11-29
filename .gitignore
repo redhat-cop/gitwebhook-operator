@@ -28,4 +28,5 @@ Dockerfile.cross
 charts
 secrets.sh
 
-
+bundle
+bundle.Dockerfile
