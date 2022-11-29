@@ -3,9 +3,9 @@ entries:
   gitwebhook-operator:
   - apiVersion: v1
     appVersion: v0.1.0
-    created: "2022-11-29T23:17:25.886648098Z"
+    created: "2022-11-29T23:48:32.86552462Z"
     description: Helm chart that deploys gitwebhook-operator
-    digest: 92d7cea199b3d64765913db7e34c99b51f2ef123ff1b216805400a21c2728617
+    digest: f47aa51472c9975b8a7dff429978e5573946e0761421ba718223422809760982
     keywords:
     - volume
     - storage
@@ -18,4 +18,4 @@ entries:
     urls:
     - https://redhat-cop.github.io/gitwebhook-operator/gitwebhook-operator/gitwebhook-operator-v0.1.0.tgz
     version: v0.1.0
-generated: "2022-11-29T23:17:25.885602697Z"
+generated: "2022-11-29T23:48:32.864096804Z"
