@@ -1,6 +1,6 @@
 module github.com/redhat-cop/gitwebhook-operator
 
-go 1.18
+go 1.18.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.5.1
