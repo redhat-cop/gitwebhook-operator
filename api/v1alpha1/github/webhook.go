@@ -97,7 +97,7 @@ func (m *GitHubWebHook) getHook(ctx context.Context) (*github.Hook, bool, error)
 
 	for {
 		hooks, response, err := git.Repositories.ListHooks(ctx, m.gitWebhook.Spec.RepositoryOwner, m.gitWebhook.Spec.RepositoryName, opt)
-		if err != nil && !IsNotFound(response) {
+		if err != nil || IsNotFound(response) {
 			log.Error(err, "unable to list hooks", "for repo", m.gitWebhook.Spec.RepositoryOwner+"/"+m.gitWebhook.Spec.RepositoryName)
 			return nil, false, err
 		}
