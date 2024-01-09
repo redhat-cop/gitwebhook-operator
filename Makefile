@@ -1,7 +1,10 @@
 CHART_REPO_URL ?= http://example.com
 HELM_REPO_DEST ?= /tmp/gh-pages
+ifneq ($(shell uname), Darwin)
 OPERATOR_NAME ?=$(shell basename -z `pwd`)
-#OPERATOR_NAME ?=$(shell basename `pwd`) #works on MacOS
+else
+OPERATOR_NAME ?=$(shell basename `pwd`)
+endif
 HELM_VERSION ?= v3.10.0
 KIND_VERSION ?= v0.14.1
 KUBECTL_VERSION ?= v1.24.7
@@ -73,8 +76,8 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-# DOCKER := podman
-DOCKER := docker
+# Defines the container engine to use. If you want to change you can call 'make DOCKER=podman'
+DOCKER ?= docker
 
 .PHONY: all
 all: build
@@ -150,10 +153,10 @@ PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
 docker-buildx: test ## Build and push docker image for the manager for cross-platform support
 	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
 	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-	- $(DOCKER)buildx create --name project-v3-builder
-	$(DOCKER)buildx use project-v3-builder
-	- $(DOCKER)buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross
-	- $(DOCKER)buildx rm project-v3-builder
+	- $(DOCKER) buildx create --name project-v3-builder
+	$(DOCKER) buildx use project-v3-builder
+	- $(DOCKER) buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross
+	- $(DOCKER) buildx rm project-v3-builder
 	rm Dockerfile.cross
 
 ##@ Deployment
@@ -220,7 +223,7 @@ bundle: manifests kustomize ## Generate bundle manifests and metadata, then vali
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
-	$(DOCKER)build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	$(DOCKER) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
@@ -309,7 +312,7 @@ kind-setup: kind kubectl helm
 .PHONY: helmchart-test
 helmchart-test: kind-setup helmchart
 	$(MAKE) IMG=${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG} docker-build
-	$(DOCKER)tag ${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG} docker.io/library/${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG}
+	$(DOCKER) tag ${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG} docker.io/library/${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG}
 	$(KIND) load docker-image ${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG} docker.io/library/${HELM_TEST_IMG_NAME}:${HELM_TEST_IMG_TAG}
 	$(HELM) repo add jetstack https://charts.jetstack.io
 	$(HELM) install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.7.1 --set installCRDs=true
