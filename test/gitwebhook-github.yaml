@@ -4,6 +4,7 @@ metadata:
   name: gitwebhook-github
 spec:
   gitHub:
+    gitHubAPIServerURL: 'https://api.github.com/' #the URL must end with '/'
     gitServerCredentials:
       name: github-pat
   repositoryOwner: ${repo_owner}
