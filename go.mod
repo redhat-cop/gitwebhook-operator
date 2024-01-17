@@ -84,6 +84,6 @@ require (
 
 require (
 	github.com/go-logr/logr v1.2.3
-	github.com/google/go-github/v48 v48.1.0
+	github.com/google/go-github/v48 v48.2.0
 	golang.org/x/oauth2 v0.2.0
 )
