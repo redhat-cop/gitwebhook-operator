@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/raffaelespazzoli/gitwebhook-operator
-  newTag: latest
+  newTag: latest@sha256:c034bc3e9261cdcabadb93d6a621b7af6f53da781e07a129f8f01e7f8ad26c7e
